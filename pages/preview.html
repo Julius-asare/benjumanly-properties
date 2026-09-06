@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Preview — BENJUMANLY PROPERTIES</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+  <link rel="stylesheet" href="../css/styles.css?v=20260901-1">
+  <style>
+    body { margin:0; font-family: var(--font-body); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap:8px; padding:8px; height: calc(100vh - 60px); box-sizing: border-box; }
+    iframe { width:100%; height:100%; border:1px solid rgba(0,0,0,0.06); border-radius:6px; background:var(--surface); }
+    .topbar { display:flex; gap:8px; padding:8px 16px; align-items:center; background:var(--nav-bg); }
+    .topbar a { padding:8px 12px; background:rgba(253,251,247,0.1); border-radius:4px; text-decoration:none; color:#fdfbf7; font-size:0.82rem; font-weight:500; letter-spacing:0.04em; }
+    .topbar a:hover { background:rgba(253,251,247,0.2); }
+    @media (max-width:900px){ .grid { grid-template-columns: 1fr; grid-auto-rows: 50vh; } }
+  </style>
+</head>
+<body>
+  <nav class="topbar" role="navigation" aria-label="Preview navigation">
+    <a href="../index.html" target="_blank">Cover</a>
+    <a href="home.html" target="_blank">Home</a>
+    <a href="signup.html" target="_blank">Sign Up</a>
+    <a href="signin.html" target="_blank">Sign In</a>
+    <a href="listing.html" target="_blank">Listing</a>
+    <a href="gallery.html" target="_blank">Gallery</a>
+    <a href="services.html" target="_blank">Services</a>
+    <a href="about.html" target="_blank">About</a>
+    <a href="contact.html" target="_blank">Contact</a>
+    <a href="admin.html" target="_blank">Admin</a>
+  </nav>
+  <div class="grid container">
+    <iframe src="../index.html" title="Cover"></iframe>
+    <iframe src="home.html" title="Home"></iframe>
+    <iframe src="signup.html" title="Sign Up"></iframe>
+    <iframe src="signin.html" title="Sign In"></iframe>
+  </div>
+</body>
+</html>

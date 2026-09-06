@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Listings — BENJUMANLY PROPERTIES</title>
+    <meta name="description" content="Browse available property developments, residential estates, and investment opportunities from BENJUMANLY PROPERTIES.">
+    <meta property="og:title" content="Property Listings — BENJUMANLY PROPERTIES">
+    <meta property="og:description" content="Browse available developments and opportunities.">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css?v=20260901-1">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to content</a>
+    <div class="loading-bar" id="loading-bar"></div>
+
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <a href="../index.html" class="nav-brand">BENJUMANLY</a>
+            <ul id="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="listing.html">Listing</a></li>
+                <li><a href="gallery.html">Gallery</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li><a href="signin.html">Sign In</a></li>
+                <li><a href="signup.html">Sign Up</a></li>
+            </ul>
+            <div class="theme-controls">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+                <button class="palette-btn" id="palette-btn" aria-label="Choose color palette">🎨</button>
+                <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span><span></span></button>
+            </div>
+            <div class="palette-panel" id="palette-panel" aria-hidden="true">
+                <div class="palette-option" data-palette="bright"><span class="palette-swatch" style="background:linear-gradient(90deg,#1a2744,#c9a84c)"></span><span>Navy &amp; Gold (default)</span></div>
+                <div class="palette-option" data-palette="warm"><span class="palette-swatch" style="background:linear-gradient(90deg,#2d4a3e,#b8965a)"></span><span>Forest Green</span></div>
+                <div class="palette-option" data-palette="green"><span class="palette-swatch" style="background:linear-gradient(90deg,#2c2c2c,#b87333)"></span><span>Charcoal &amp; Copper</span></div>
+            </div>
+        </div>
+    </nav>
+
+    <header class="listing-hero reveal">
+        <div class="container reveal">
+            <span class="eyebrow">Current Opportunities</span>
+            <h1>Property Listings</h1>
+            <p class="tagline">Browse available developments and opportunities</p>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <section class="role-section reveal">
+            <div class="container">
+                <span class="section-tag">Featured</span>
+                <h2>Featured Listings</h2>
+                <p class="intro">A curated selection of current development opportunities and resale properties.</p>
+
+                <div class="property-grid" id="property-grid">
+                    <div class="property-card reveal">
+                        <div class="property-media"><img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&h=400&fit=crop" alt="Riverside Estate exterior" loading="lazy"><span class="property-badge">Under Construction</span></div>
+                        <div class="property-body">
+                            <h3>Riverside Estate</h3>
+                            <p>6 units, modern amenities, expected completion Q4 2026.</p>
+                            <div class="property-meta"><span>6 units · Riverside</span><strong>Q4 2026</strong></div>
+                        </div>
+                    </div>
+                    <div class="property-card reveal">
+                        <div class="property-media"><img src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&h=400&fit=crop" alt="Greenfield Villas rendering" loading="lazy"><span class="property-badge">For Sale</span></div>
+                        <div class="property-body">
+                            <h3>Greenfield Villas</h3>
+                            <p>Spacious plots near transport links and schools.</p>
+                            <div class="property-meta"><span>Serviced plots</span><strong>Open</strong></div>
+                        </div>
+                    </div>
+                    <div class="property-card reveal">
+                        <div class="property-media"><img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=400&fit=crop" alt="Urban Renewal Block mixed-use building" loading="lazy"><span class="property-badge">Mixed-Use</span></div>
+                        <div class="property-body">
+                            <h3>Urban Renewal Block</h3>
+                            <p>Mixed-use redevelopment in a high-demand area.</p>
+                            <div class="property-meta"><span>Commercial + Residential</span><strong>Planning</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <div class="brand">BENJUMANLY PROPERTIES</div>
+                <p class="muted">Expert guidance across feasibility, design, compliance, and delivery.</p>
+                <div class="links">
+                    <a href="../index.html">Home</a>
+                    <a href="listing.html">Listing</a>
+                    <a href="gallery.html">Gallery</a>
+                    <a href="signup.html">Sign Up</a>
+                    <a href="signin.html">Sign In</a>
+                </div>
+            </div>
+            <address class="contact">
+                <h4>Contact</h4>
+                <!-- TODO: Replace with real phone number -->
+                <p>Phone: +233 275 302 770</p>
+                <!-- TODO: Replace with real email -->
+                <p>Email: <a href="mailto:asarebernard522@gmail.com">asarebernard522@gmail.com</a></p>
+                <!-- TODO: Replace with real address -->
+                <p>Address: 123 Development Ave, Suite 400</p>
+            </address>
+        </div>
+        <div class="bottom">&copy; 2026 BENJUMANLY PROPERTIES AND CONSULTANCY SERVICES LTD — All rights reserved.</div>
+    </footer>
+    <button class="scroll-top" id="scroll-top" aria-label="Scroll to top">↑</button>
+    <script src="../js/main.js" defer></script>
+    <script>
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, function(c){
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+    fetch('/api/listings').then(function(res){ return res.ok ? res.json() : Promise.reject(); }).then(function(listings){
+        if(!Array.isArray(listings) || !listings.length) return;
+        var grid = document.getElementById('property-grid');
+        grid.innerHTML = listings.map(function(item){
+            return '<div class="property-card reveal visible">' +
+                '<div class="property-media">' +
+                    (item.image_url ? '<img src="' + escapeHtml(item.image_url) + '" alt="' + escapeHtml(item.title) + '" loading="lazy">' : '') +
+                    (item.badge ? '<span class="property-badge">' + escapeHtml(item.badge) + '</span>' : '') +
+                '</div>' +
+                '<div class="property-body">' +
+                    '<h3>' + escapeHtml(item.title) + '</h3>' +
+                    '<p>' + escapeHtml(item.description) + '</p>' +
+                    '<div class="property-meta"><span>' + escapeHtml(item.meta_label) + '</span><strong>' + escapeHtml(item.meta_value) + '</strong></div>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+    }).catch(function(){});
+    </script>
+</body>
+</html>

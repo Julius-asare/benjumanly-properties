@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up — BENJUMANLY PROPERTIES</title>
+    <meta name="description" content="Create a BENJUMANLY PROPERTIES account to save listings, request consultations, and follow project milestones.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css?v=20260901-1">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to content</a>
+    <div class="loading-bar" id="loading-bar"></div>
+
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <a href="../index.html" class="nav-brand">BENJUMANLY</a>
+            <ul id="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="listing.html">Listing</a></li>
+                <li><a href="gallery.html">Gallery</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li><a href="signin.html">Sign In</a></li>
+                <li><a href="signup.html">Sign Up</a></li>
+            </ul>
+            <div class="theme-controls">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+                <button class="palette-btn" id="palette-btn" aria-label="Choose color palette">🎨</button>
+                <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span><span></span></button>
+            </div>
+            <div class="palette-panel" id="palette-panel" aria-hidden="true">
+                <div class="palette-option" data-palette="bright"><span class="palette-swatch" style="background:linear-gradient(90deg,#1a2744,#c9a84c)"></span><span>Navy &amp; Gold (default)</span></div>
+                <div class="palette-option" data-palette="warm"><span class="palette-swatch" style="background:linear-gradient(90deg,#2d4a3e,#b8965a)"></span><span>Forest Green</span></div>
+                <div class="palette-option" data-palette="green"><span class="palette-swatch" style="background:linear-gradient(90deg,#2c2c2c,#b87333)"></span><span>Charcoal &amp; Copper</span></div>
+            </div>
+        </div>
+    </nav>
+
+    <main id="main-content" class="auth-container">
+        <div class="auth-side">
+            <span class="eyebrow">Join us</span>
+            <h2>Start your next development with confidence.</h2>
+            <p>Create an account to save listings, request consultations, and follow project milestones.</p>
+        </div>
+        <div class="auth-card-wrap">
+            <div class="auth-card reveal">
+                <h2>Sign Up</h2>
+                <p class="sub">It only takes a minute to get started.</p>
+                <form id="signup-form" novalidate>
+                    <label for="name">Full name</label>
+                    <input type="text" id="name" name="name" required placeholder="Your full name" minlength="2">
+
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required placeholder="you@example.com">
+
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="Create a password" minlength="6">
+
+                    <label for="confirm">Confirm password</label>
+                    <input type="password" id="confirm" name="confirm" required placeholder="Re-enter password" minlength="6">
+
+                    <label class="checkbox"><input type="checkbox" id="terms" required> I agree to the <a href="#">terms and conditions</a></label>
+
+                    <button type="submit" class="btn primary magnetic">Create Account</button>
+                </form>
+
+                <p class="muted">Already have an account? <a href="signin.html">Sign in</a></p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <div class="brand">BENJUMANLY PROPERTIES</div>
+                <p class="muted">Delivering clarity and commercial outcomes.</p>
+                <div class="links">
+                    <a href="../index.html">Home</a>
+                    <a href="signin.html">Sign In</a>
+                </div>
+            </div>
+            <address class="contact">
+                <h4>Contact</h4>
+                <!-- TODO: Replace with real email -->
+                <p>Email: <a href="mailto:asarebernard522@gmail.com">asarebernard522@gmail.com</a></p>
+            </address>
+        </div>
+        <div class="bottom">&copy; 2026 BENJUMANLY PROPERTIES AND CONSULTANCY SERVICES LTD</div>
+    </footer>
+
+    <script src="../js/main.js" defer></script>
+    <script>
+    document.getElementById('signup-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        var name = document.getElementById('name').value.trim();
+        var email = document.getElementById('email').value.trim();
+        var pw = document.getElementById('password').value;
+        var confirm = document.getElementById('confirm').value;
+        var terms = document.getElementById('terms').checked;
+        if(!name || !email || !pw || !confirm){ showToast('Please complete all fields.', 'error'); return; }
+        if(pw !== confirm){ showToast('Passwords do not match.', 'error'); return; }
+        if(pw.length < 6){ showToast('Password must be at least 6 characters.', 'error'); return; }
+        if(!terms){ showToast('Please accept the terms.', 'error'); return; }
+
+        var submitBtn = this.querySelector('button[type="submit"]');
+        var originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating account...';
+
+        fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name, email: email, password: pw })
+        })
+        .then(function(res){ return res.json().then(function(data){ return { ok: res.ok, data: data }; }); })
+        .then(function(result){
+            if(!result.ok){ showToast(result.data.error || 'Could not create account.', 'error'); submitBtn.disabled = false; submitBtn.textContent = originalText; return; }
+            showToast('Account created — welcome, ' + result.data.name + '.', 'success');
+            setTimeout(function(){ location.href = 'signin.html'; }, 600);
+        })
+        .catch(function(){ showToast('Could not reach the server. Please try again.', 'error'); submitBtn.disabled = false; submitBtn.textContent = originalText; });
+    });
+    </script>
+</body>
+</html>

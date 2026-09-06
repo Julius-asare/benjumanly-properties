@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In — BENJUMANLY PROPERTIES</title>
+    <meta name="description" content="Sign in to your BENJUMANLY PROPERTIES account to track listings, consultations, and project updates.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css?v=20260901-1">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to content</a>
+    <div class="loading-bar" id="loading-bar"></div>
+
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <a href="../index.html" class="nav-brand">BENJUMANLY</a>
+            <ul id="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="listing.html">Listing</a></li>
+                <li><a href="gallery.html">Gallery</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li><a href="signin.html">Sign In</a></li>
+                <li><a href="signup.html">Sign Up</a></li>
+            </ul>
+            <div class="theme-controls">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+                <button class="palette-btn" id="palette-btn" aria-label="Choose color palette">🎨</button>
+                <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span><span></span></button>
+            </div>
+            <div class="palette-panel" id="palette-panel" aria-hidden="true">
+                <div class="palette-option" data-palette="bright"><span class="palette-swatch" style="background:linear-gradient(90deg,#1a2744,#c9a84c)"></span><span>Navy &amp; Gold (default)</span></div>
+                <div class="palette-option" data-palette="warm"><span class="palette-swatch" style="background:linear-gradient(90deg,#2d4a3e,#b8965a)"></span><span>Forest Green</span></div>
+                <div class="palette-option" data-palette="green"><span class="palette-swatch" style="background:linear-gradient(90deg,#2c2c2c,#b87333)"></span><span>Charcoal &amp; Copper</span></div>
+            </div>
+        </div>
+    </nav>
+
+    <main id="main-content" class="auth-container">
+        <div class="auth-side">
+            <span class="eyebrow">Welcome back</span>
+            <h2>Pick up where you left off.</h2>
+            <p>Sign in to track listings, consultations, and project updates from BENJUMANLY Properties.</p>
+        </div>
+        <div class="auth-card-wrap">
+            <div class="auth-card reveal">
+                <h2>Sign In</h2>
+                <p class="sub">Enter your details to access your account.</p>
+                <form id="signin-form" novalidate>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required placeholder="you@example.com">
+
+                    <label for="password">Password</label>
+                    <div class="password-row">
+                        <input type="password" id="password" name="password" required placeholder="Enter your password" minlength="6">
+                        <button type="button" class="toggle-pw" aria-label="Toggle password visibility">Show</button>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="checkbox"><input type="checkbox" name="remember"> Remember me</label>
+                    </div>
+
+                    <button type="submit" class="btn primary magnetic">Sign In</button>
+                </form>
+
+                <p class="muted">Don't have an account? <a href="signup.html">Create an account</a></p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <div class="brand">BENJUMANLY PROPERTIES</div>
+                <p class="muted">Helping teams deliver better projects.</p>
+                <div class="links">
+                    <a href="../index.html">Home</a>
+                    <a href="signup.html">Sign Up</a>
+                </div>
+            </div>
+            <address class="contact">
+                <h4>Contact</h4>
+                <!-- TODO: Replace with real email -->
+                <p>Email: <a href="mailto:asarebernard522@gmail.com">asarebernard522@gmail.com</a></p>
+            </address>
+        </div>
+        <div class="bottom">&copy; 2026 BENJUMANLY PROPERTIES AND CONSULTANCY SERVICES LTD</div>
+    </footer>
+
+    <script src="../js/main.js" defer></script>
+    <script>
+    document.getElementById('signin-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        var email = document.getElementById('email').value.trim();
+        var password = document.getElementById('password').value;
+        if(!email || !password){ showToast('Please fill in both fields.', 'error'); return; }
+
+        var submitBtn = this.querySelector('button[type="submit"]');
+        var originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Signing in...';
+
+        fetch('/api/auth/signin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, password: password })
+        })
+        .then(function(res){ return res.json().then(function(data){ return { ok: res.ok, data: data }; }); })
+        .then(function(result){
+            if(!result.ok){ showToast(result.data.error || 'Sign in failed.', 'error'); submitBtn.disabled = false; submitBtn.textContent = originalText; return; }
+            showToast('Welcome back, ' + result.data.name + '.', 'success');
+            setTimeout(function(){ location.href = result.data.role === 'admin' ? 'admin.html' : '../index.html'; }, 600);
+        })
+        .catch(function(){ showToast('Could not reach the server. Please try again.', 'error'); submitBtn.disabled = false; submitBtn.textContent = originalText; });
+    });
+    </script>
+</body>
+</html>

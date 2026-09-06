@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — BENJUMANLY PROPERTIES</title>
+    <meta name="description" content="Admin dashboard for managing listings, contacts, and users.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css?v=20260901-1">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to content</a>
+    <div class="loading-bar" id="loading-bar"></div>
+
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <a href="../index.html" class="nav-brand">BENJUMANLY</a>
+            <ul id="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="listing.html">Listing</a></li>
+                <li><a href="gallery.html">Gallery</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li><a href="admin.html">Admin</a></li>
+            </ul>
+            <div class="theme-controls">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+                <button class="palette-btn" id="palette-btn" aria-label="Choose color palette">🎨</button>
+                <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span><span></span></button>
+            </div>
+            <div class="palette-panel" id="palette-panel" aria-hidden="true">
+                <div class="palette-option" data-palette="bright"><span class="palette-swatch" style="background:linear-gradient(90deg,#1a2744,#c9a84c)"></span><span>Navy &amp; Gold (default)</span></div>
+                <div class="palette-option" data-palette="warm"><span class="palette-swatch" style="background:linear-gradient(90deg,#2d4a3e,#b8965a)"></span><span>Forest Green</span></div>
+                <div class="palette-option" data-palette="green"><span class="palette-swatch" style="background:linear-gradient(90deg,#2c2c2c,#b87333)"></span><span>Charcoal &amp; Copper</span></div>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero reveal">
+        <div class="container reveal">
+            <span class="eyebrow">Administration</span>
+            <h1>Admin Dashboard</h1>
+            <p class="tagline">Manage listings, contacts, and users</p>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <section class="role-section reveal">
+            <div class="container">
+                <div class="admin-tabs">
+                    <button class="admin-tab active" data-tab="listings">Listings</button>
+                    <button class="admin-tab" data-tab="contacts">Contacts</button>
+                    <button class="admin-tab" data-tab="users">Users</button>
+                </div>
+
+                <!-- Listings Panel -->
+                <div class="admin-panel" id="panel-listings">
+                    <div class="admin-header">
+                        <h2>Manage Listings</h2>
+                        <button class="btn primary small" id="add-listing-btn">+ Add Listing</button>
+                    </div>
+                    <div class="admin-list" id="listings-list">
+                        <div class="admin-empty">Loading listings...</div>
+                    </div>
+                </div>
+
+                <!-- Contacts Panel -->
+                <div class="admin-panel" id="panel-contacts" style="display:none">
+                    <div class="admin-header">
+                        <h2>Contact Messages</h2>
+                    </div>
+                    <div class="admin-list" id="contacts-list">
+                        <div class="admin-empty">Loading contacts...</div>
+                    </div>
+                </div>
+
+                <!-- Users Panel -->
+                <div class="admin-panel" id="panel-users" style="display:none">
+                    <div class="admin-header">
+                        <h2>Registered Users</h2>
+                    </div>
+                    <div class="admin-list" id="users-list">
+                        <div class="admin-empty">Loading users...</div>
+                    </div>
+                </div>
+
+                <!-- Add/Edit Listing Modal -->
+                <div class="admin-modal" id="listing-modal" style="display:none">
+                    <div class="admin-modal-content">
+                        <h3 id="modal-title">Add New Listing</h3>
+                        <form id="listing-form">
+                            <input type="hidden" id="listing-id">
+                            <label for="listing-title">Title</label>
+                            <input type="text" id="listing-title" required placeholder="Property name">
+                            <label for="listing-desc">Description</label>
+                            <textarea id="listing-desc" rows="3" required placeholder="Property description"></textarea>
+                            <label for="listing-badge">Badge</label>
+                            <input type="text" id="listing-badge" placeholder="e.g. For Sale, Under Construction">
+                            <label for="listing-meta-label">Meta Label</label>
+                            <input type="text" id="listing-meta-label" placeholder="e.g. 6 units · Riverside">
+                            <label for="listing-meta-value">Meta Value</label>
+                            <input type="text" id="listing-meta-value" placeholder="e.g. Q4 2026">
+                            <label for="listing-image">Image URL</label>
+                            <input type="url" id="listing-image" placeholder="https://...">
+                            <div class="modal-actions">
+                                <button type="submit" class="btn primary small">Save</button>
+                                <button type="button" class="btn outline small" id="cancel-modal">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <div class="brand">BENJUMANLY PROPERTIES</div>
+                <p class="muted">Admin Dashboard</p>
+            </div>
+            <address class="contact">
+                <h4>Contact</h4>
+                <p>Email: <a href="mailto:asarebernard522@gmail.com">asarebernard522@gmail.com</a></p>
+            </address>
+        </div>
+        <div class="bottom">&copy; 2026 BENJUMANLY PROPERTIES AND CONSULTANCY SERVICES LTD</div>
+    </footer>
+    <button class="scroll-top" id="scroll-top" aria-label="Scroll to top">↑</button>
+    <script src="../js/main.js" defer></script>
+    <script>
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, function(c){
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    /* Tab switching */
+    document.querySelectorAll('.admin-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.admin-tab').forEach(function(t) { t.classList.remove('active'); });
+            document.querySelectorAll('.admin-panel').forEach(function(p) { p.style.display = 'none'; });
+            tab.classList.add('active');
+            document.getElementById('panel-' + tab.dataset.tab).style.display = '';
+        });
+    });
+
+    /* Load Listings */
+    function loadListings() {
+        fetch('/api/listings').then(function(r){ return r.json(); }).then(function(listings) {
+            var el = document.getElementById('listings-list');
+            if (!listings.length) { el.innerHTML = '<div class="admin-empty">No listings yet.</div>'; return; }
+            el.innerHTML = listings.map(function(item) {
+                return '<div class="admin-row">' +
+                    '<div class="admin-row-main">' +
+                        '<h4>' + escapeHtml(item.title) + '</h4>' +
+                        '<p>' + escapeHtml(item.description).substring(0, 100) + '...</p>' +
+                        '<div class="admin-row-meta">' + escapeHtml(item.badge) + ' &middot; ' + escapeHtml(item.meta_label) + '</div>' +
+                    '</div>' +
+                    '<div class="admin-row-actions">' +
+                        '<button class="btn outline small" onclick="editListing(' + item.id + ')">Edit</button>' +
+                        '<button class="btn danger small" onclick="deleteListing(' + item.id + ')">Delete</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }).catch(function() {
+            document.getElementById('listings-list').innerHTML = '<div class="admin-empty">Could not load listings.</div>';
+        });
+    }
+
+    /* Load Contacts */
+    function loadContacts() {
+        fetch('/api/admin/contacts').then(function(r){ return r.json(); }).then(function(contacts) {
+            var el = document.getElementById('contacts-list');
+            if (!contacts.length) { el.innerHTML = '<div class="admin-empty">No contact messages yet.</div>'; return; }
+            el.innerHTML = contacts.map(function(item) {
+                return '<div class="admin-row">' +
+                    '<div class="admin-row-main">' +
+                        '<h4>' + escapeHtml(item.name) + '</h4>' +
+                        '<p>' + escapeHtml(item.message).substring(0, 120) + '</p>' +
+                        '<div class="admin-row-meta">' + escapeHtml(item.email) + ' &middot; ' + item.created_at + '</div>' +
+                    '</div>' +
+                    '<div class="admin-row-actions">' +
+                        '<button class="btn danger small" onclick="deleteContact(' + item.id + ')">Delete</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }).catch(function() {
+            document.getElementById('contacts-list').innerHTML = '<div class="admin-empty">Could not load contacts.</div>';
+        });
+    }
+
+    /* Load Users */
+    function loadUsers() {
+        fetch('/api/admin/users').then(function(r){ return r.json(); }).then(function(users) {
+            var el = document.getElementById('users-list');
+            if (!users.length) { el.innerHTML = '<div class="admin-empty">No users yet.</div>'; return; }
+            el.innerHTML = users.map(function(item) {
+                return '<div class="admin-row">' +
+                    '<div class="admin-row-main">' +
+                        '<h4>' + escapeHtml(item.name) + '</h4>' +
+                        '<p>' + escapeHtml(item.email) + '</p>' +
+                        '<div class="admin-row-meta">Role: ' + escapeHtml(item.role) + ' &middot; Joined: ' + item.created_at + '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }).catch(function() {
+            document.getElementById('users-list').innerHTML = '<div class="admin-empty">Could not load users.</div>';
+        });
+    }
+
+    /* Modal controls */
+    var modal = document.getElementById('listing-modal');
+    document.getElementById('add-listing-btn').addEventListener('click', function() {
+        document.getElementById('modal-title').textContent = 'Add New Listing';
+        document.getElementById('listing-form').reset();
+        document.getElementById('listing-id').value = '';
+        modal.style.display = 'flex';
+    });
+    document.getElementById('cancel-modal').addEventListener('click', function() { modal.style.display = 'none'; });
+    modal.addEventListener('click', function(e) { if (e.target === modal) modal.style.display = 'none'; });
+
+    /* Save listing */
+    document.getElementById('listing-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var id = document.getElementById('listing-id').value;
+        var data = {
+            title: document.getElementById('listing-title').value.trim(),
+            description: document.getElementById('listing-desc').value.trim(),
+            badge: document.getElementById('listing-badge').value.trim(),
+            meta_label: document.getElementById('listing-meta-label').value.trim(),
+            meta_value: document.getElementById('listing-meta-value').value.trim(),
+            image_url: document.getElementById('listing-image').value.trim()
+        };
+        var url = id ? '/api/listings/' + id : '/api/listings';
+        var method = id ? 'PUT' : 'POST';
+        fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+        .then(function(r){ return r.json(); })
+        .then(function(result) {
+            modal.style.display = 'none';
+            showToast(id ? 'Listing updated.' : 'Listing created.', 'success');
+            loadListings();
+        })
+        .catch(function(){ showToast('Error saving listing.', 'error'); });
+    });
+
+    /* Edit listing */
+    window.editListing = function(id) {
+        fetch('/api/listings').then(function(r){ return r.json(); }).then(function(listings) {
+            var item = listings.find(function(l){ return l.id === id; });
+            if (!item) return;
+            document.getElementById('modal-title').textContent = 'Edit Listing';
+            document.getElementById('listing-id').value = item.id;
+            document.getElementById('listing-title').value = item.title;
+            document.getElementById('listing-desc').value = item.description;
+            document.getElementById('listing-badge').value = item.badge;
+            document.getElementById('listing-meta-label').value = item.meta_label;
+            document.getElementById('listing-meta-value').value = item.meta_value;
+            document.getElementById('listing-image').value = item.image_url;
+            modal.style.display = 'flex';
+        });
+    };
+
+    /* Delete listing */
+    window.deleteListing = function(id) {
+        if (!confirm('Delete this listing?')) return;
+        fetch('/api/listings/' + id, { method: 'DELETE' })
+        .then(function(){ showToast('Listing deleted.', 'success'); loadListings(); })
+        .catch(function(){ showToast('Error deleting listing.', 'error'); });
+    };
+
+    /* Delete contact */
+    window.deleteContact = function(id) {
+        if (!confirm('Delete this contact message?')) return;
+        fetch('/api/admin/contacts/' + id, { method: 'DELETE' })
+        .then(function(){ showToast('Contact deleted.', 'success'); loadContacts(); })
+        .catch(function(){ showToast('Error deleting contact.', 'error'); });
+    };
+
+    /* Initial load */
+    loadListings();
+    loadContacts();
+    loadUsers();
+    </script>
+</body>
+</html>
