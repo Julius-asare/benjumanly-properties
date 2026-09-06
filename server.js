@@ -12,7 +12,11 @@ let db;
 if (isProduction) {
   /* PostgreSQL for production (Render + Supabase) */
   const { Pool } = require('pg');
-  db = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  db = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    family: 4
+  });
 
   async function initDB() {
     await db.query(`
