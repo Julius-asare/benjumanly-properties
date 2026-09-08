@@ -1,21 +1,26 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const cors = require('cors');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'bjml-secret-change-in-production-' + (process.env.NODE_ENV || 'dev');
 const isProduction = !!process.env.DATABASE_URL;
 
 /* ---------- Database ---------- */
 let db;
 
 if (isProduction) {
-  /* PostgreSQL for production (Render + Supabase) */
   const { Pool } = require('pg');
   db = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
-    family: 4
+    family: 4,
+    max: 10
   });
 
   async function initDB() {
@@ -51,28 +56,22 @@ if (isProduction) {
       );
     `);
 
-    /* Seed default admin */
     const adminCheck = await db.query('SELECT id FROM users WHERE email = $1', ['admin@benjumanly.com']);
     if (adminCheck.rows.length === 0) {
-      const hash = bcrypt.hashSync('admin123', 10);
+      const hash = await bcrypt.hash('admin123', 10);
       await db.query('INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)', ['Admin', 'admin@benjumanly.com', hash, 'admin']);
-      console.log('Default admin created: admin@benjumanly.com / admin123');
     }
 
-    /* Seed listings */
     const listingCheck = await db.query('SELECT COUNT(*) as cnt FROM listings');
     if (parseInt(listingCheck.rows[0].cnt) === 0) {
       await db.query('INSERT INTO listings (title, description, badge, meta_label, meta_value, image_url) VALUES ($1,$2,$3,$4,$5,$6)', ['Riverside Estate', '6 units, modern amenities, expected completion Q4 2026.', 'Under Construction', '6 units · Riverside', 'Q4 2026', 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&h=400&fit=crop']);
       await db.query('INSERT INTO listings (title, description, badge, meta_label, meta_value, image_url) VALUES ($1,$2,$3,$4,$5,$6)', ['Greenfield Villas', 'Spacious plots near transport links and schools.', 'For Sale', 'Serviced plots', 'Open', 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&h=400&fit=crop']);
       await db.query('INSERT INTO listings (title, description, badge, meta_label, meta_value, image_url) VALUES ($1,$2,$3,$4,$5,$6)', ['Urban Renewal Block', 'Mixed-use redevelopment in a high-demand area.', 'Mixed-Use', 'Commercial + Residential', 'Planning', 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=400&fit=crop']);
-      console.log('Default listings seeded.');
     }
-    console.log('PostgreSQL database initialized.');
   }
-  initDB().catch(err => { console.error('DB init error:', err); process.exit(1); });
+  initDB().catch(err => { console.error('DB init error:', err.message); process.exit(1); });
 
 } else {
-  /* SQLite for local development */
   const Database = require('better-sqlite3');
   const sqlite = new Database(path.join(__dirname, 'data.db'));
   sqlite.pragma('journal_mode = WAL');
@@ -110,7 +109,6 @@ if (isProduction) {
   if (!adminExists) {
     const hash = bcrypt.hashSync('admin123', 10);
     sqlite.prepare('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)').run('Admin', 'admin@benjumanly.com', hash, 'admin');
-    console.log('Default admin created: admin@benjumanly.com / admin123');
   }
   const listingCount = sqlite.prepare('SELECT COUNT(*) as cnt FROM listings').get().cnt;
   if (listingCount === 0) {
@@ -118,21 +116,18 @@ if (isProduction) {
     insert.run('Riverside Estate', '6 units, modern amenities, expected completion Q4 2026.', 'Under Construction', '6 units · Riverside', 'Q4 2026', 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&h=400&fit=crop');
     insert.run('Greenfield Villas', 'Spacious plots near transport links and schools.', 'For Sale', 'Serviced plots', 'Open', 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&h=400&fit=crop');
     insert.run('Urban Renewal Block', 'Mixed-use redevelopment in a high-demand area.', 'Mixed-Use', 'Commercial + Residential', 'Planning', 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=400&fit=crop');
-    console.log('Default listings seeded.');
   }
-  console.log('SQLite database initialized.');
 
-  /* Wrap SQLite in a pg-like query interface for consistency */
   db = {
     async query(sql, params = []) {
-      if (sql.includes('RETURNING') || sql.trim().startsWith('INSERT') && sql.includes('RETURNING')) {
+      if (sql.includes('RETURNING') && sql.trim().startsWith('INSERT')) {
         const stmt = sqlite.prepare(sql.replace(/\$\d+/g, '?'));
         const result = stmt.run(...params);
         return { rows: [{ id: result.lastInsertRowid }] };
       }
       if (sql.trim().startsWith('INSERT')) {
         const stmt = sqlite.prepare(sql.replace(/\$\d+/g, '?'));
-        const result = stmt.run(...params);
+        stmt.run(...params);
         return { rows: [] };
       }
       if (sql.trim().startsWith('UPDATE') || sql.trim().startsWith('DELETE')) {
@@ -147,25 +142,91 @@ if (isProduction) {
   };
 }
 
-/* ---------- Middleware ---------- */
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+/* ---------- Security Middleware ---------- */
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "http:"],
+      scriptSrc: ["'self'"],
+      connectSrc: ["'self'"]
+    }
+  },
+  crossOriginEmbedderPolicy: false
+}));
+
+app.use(cors({ origin: process.env.ALLOWED_ORIGIN || false, credentials: true }));
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please try again later.' }
+});
+app.use('/api/', limiter);
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many attempts. Please try again later.' }
+});
+app.use('/api/auth/', authLimiter);
+
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+/* ---------- Auth Middleware ---------- */
+function generateToken(user) {
+  return jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
+}
+
+function authenticate(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Authentication required.' });
+  }
+  try {
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid or expired token.' });
+  }
+}
+
+function requireAdmin(req, res, next) {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+  next();
+}
 
 /* ---------- API: Auth ---------- */
 app.post('/api/auth/signup', async (req, res) => {
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) return res.status(400).json({ error: 'All fields are required.' });
-    if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+    if (typeof name !== 'string' || name.length > 100) return res.status(400).json({ error: 'Invalid name.' });
+    if (typeof email !== 'string' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address.' });
+    }
+    if (typeof password !== 'string' || password.length < 8 || password.length > 128) {
+      return res.status(400).json({ error: 'Password must be 8-128 characters.' });
+    }
 
-    const existing = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+    const existing = await db.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
     if (existing.rows.length > 0) return res.status(409).json({ error: 'An account with this email already exists.' });
 
-    const hash = bcrypt.hashSync(password, 10);
-    const result = await db.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id', [name, email, hash]);
-    res.status(201).json({ id: result.rows[0].id, name, email, role: 'user' });
+    const hash = await bcrypt.hash(password, 10);
+    const result = await db.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email, role', [name.trim(), email.toLowerCase(), hash]);
+    const user = result.rows[0];
+    const token = generateToken(user);
+    res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
   } catch (err) {
-    console.error('Signup error:', err);
     res.status(500).json({ error: 'Server error. Please try again.' });
   }
 });
@@ -175,15 +236,25 @@ app.post('/api/auth/signin', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
 
-    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (result.rows.length === 0 || !bcrypt.compareSync(password, result.rows[0].password)) {
+    const result = await db.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (result.rows.length === 0 || !(await bcrypt.compare(password, result.rows[0].password))) {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
     const user = result.rows[0];
-    res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
+    const token = generateToken(user);
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
   } catch (err) {
-    console.error('Signin error:', err);
     res.status(500).json({ error: 'Server error. Please try again.' });
+  }
+});
+
+app.get('/api/auth/me', authenticate, async (req, res) => {
+  try {
+    const result = await db.query('SELECT id, name, email, role, created_at FROM users WHERE id = $1', [req.user.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'User not found.' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error.' });
   }
 });
 
@@ -192,68 +263,70 @@ app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, message } = req.body;
     if (!name || !email || !message) return res.status(400).json({ error: 'All fields are required.' });
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
+    if (typeof name !== 'string' || name.length > 100) return res.status(400).json({ error: 'Invalid name.' });
+    if (typeof email !== 'string' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address.' });
+    }
+    if (typeof message !== 'string' || message.length > 2000) return res.status(400).json({ error: 'Message must be under 2000 characters.' });
 
-    await db.query('INSERT INTO contacts (name, email, message) VALUES ($1, $2, $3)', [name, email, message]);
+    await db.query('INSERT INTO contacts (name, email, message) VALUES ($1, $2, $3)', [name.trim(), email.toLowerCase(), message.trim()]);
     res.status(201).json({ success: true });
   } catch (err) {
-    console.error('Contact error:', err);
     res.status(500).json({ error: 'Server error. Please try again.' });
   }
 });
 
-/* ---------- API: Listings ---------- */
+/* ---------- API: Listings (public read) ---------- */
 app.get('/api/listings', async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM listings ORDER BY id DESC');
     res.json(result.rows);
   } catch (err) {
-    console.error('Listings error:', err);
     res.status(500).json({ error: 'Server error.' });
   }
 });
 
-app.post('/api/listings', async (req, res) => {
+/* ---------- API: Listings (admin write) ---------- */
+app.post('/api/listings', authenticate, requireAdmin, async (req, res) => {
   try {
     const { title, description, badge, meta_label, meta_value, image_url } = req.body;
     if (!title || !description) return res.status(400).json({ error: 'Title and description are required.' });
+    if (typeof title !== 'string' || title.length > 200) return res.status(400).json({ error: 'Invalid title.' });
+    if (typeof description !== 'string' || description.length > 2000) return res.status(400).json({ error: 'Description must be under 2000 characters.' });
 
-    const result = await db.query('INSERT INTO listings (title, description, badge, meta_label, meta_value, image_url) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id', [title, description, badge || '', meta_label || '', meta_value || '', image_url || '']);
-    res.status(201).json({ id: result.rows[0].id, title, description, badge, meta_label, meta_value, image_url });
+    const result = await db.query('INSERT INTO listings (title, description, badge, meta_label, meta_value, image_url) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *', [title.trim(), description.trim(), (badge || '').trim(), (meta_label || '').trim(), (meta_value || '').trim(), (image_url || '').trim()]);
+    res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('Create listing error:', err);
     res.status(500).json({ error: 'Server error.' });
   }
 });
 
-app.put('/api/listings/:id', async (req, res) => {
+app.put('/api/listings/:id', authenticate, requireAdmin, async (req, res) => {
   try {
     const { title, description, badge, meta_label, meta_value, image_url } = req.body;
     const existing = await db.query('SELECT id FROM listings WHERE id = $1', [req.params.id]);
     if (existing.rows.length === 0) return res.status(404).json({ error: 'Listing not found.' });
 
-    await db.query('UPDATE listings SET title=$1, description=$2, badge=$3, meta_label=$4, meta_value=$5, image_url=$6 WHERE id=$7', [title, description, badge || '', meta_label || '', meta_value || '', image_url || '', req.params.id]);
+    await db.query('UPDATE listings SET title=$1, description=$2, badge=$3, meta_label=$4, meta_value=$5, image_url=$6 WHERE id=$7', [(title || '').trim(), (description || '').trim(), (badge || '').trim(), (meta_label || '').trim(), (meta_value || '').trim(), (image_url || '').trim(), req.params.id]);
     res.json({ id: Number(req.params.id), title, description, badge, meta_label, meta_value, image_url });
   } catch (err) {
-    console.error('Update listing error:', err);
     res.status(500).json({ error: 'Server error.' });
   }
 });
 
-app.delete('/api/listings/:id', async (req, res) => {
+app.delete('/api/listings/:id', authenticate, requireAdmin, async (req, res) => {
   try {
     const existing = await db.query('SELECT id FROM listings WHERE id = $1', [req.params.id]);
     if (existing.rows.length === 0) return res.status(404).json({ error: 'Listing not found.' });
     await db.query('DELETE FROM listings WHERE id = $1', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
-    console.error('Delete listing error:', err);
     res.status(500).json({ error: 'Server error.' });
   }
 });
 
-/* ---------- API: Admin (contacts, users) ---------- */
-app.get('/api/admin/contacts', async (req, res) => {
+/* ---------- API: Admin (protected) ---------- */
+app.get('/api/admin/contacts', authenticate, requireAdmin, async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM contacts ORDER BY id DESC');
     res.json(result.rows);
@@ -262,7 +335,7 @@ app.get('/api/admin/contacts', async (req, res) => {
   }
 });
 
-app.get('/api/admin/users', async (req, res) => {
+app.get('/api/admin/users', authenticate, requireAdmin, async (req, res) => {
   try {
     const result = await db.query('SELECT id, name, email, role, created_at FROM users ORDER BY id DESC');
     res.json(result.rows);
@@ -271,7 +344,7 @@ app.get('/api/admin/users', async (req, res) => {
   }
 });
 
-app.delete('/api/admin/contacts/:id', async (req, res) => {
+app.delete('/api/admin/contacts/:id', authenticate, requireAdmin, async (req, res) => {
   try {
     await db.query('DELETE FROM contacts WHERE id = $1', [req.params.id]);
     res.json({ success: true });
@@ -280,12 +353,28 @@ app.delete('/api/admin/contacts/:id', async (req, res) => {
   }
 });
 
-/* ---------- Static files ---------- */
-app.use(express.static(__dirname));
+/* ---------- Static files (restricted) ---------- */
+app.use(express.static(path.join(__dirname, 'images'), { maxAge: '1y', immutable: true }));
+app.use(express.static(path.join(__dirname, 'css'), { maxAge: '7d' }));
+app.use(express.static(path.join(__dirname, 'js'), { maxAge: '7d' }));
+app.use(express.static(path.join(__dirname, 'pages'), { maxAge: '1d' }));
+app.use(express.static(__dirname, { maxAge: '1d', index: 'index.html' }));
+
+/* ---------- SPA fallback ---------- */
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api/')) {
+    res.status(404).sendFile(path.join(__dirname, 'index.html'));
+  } else {
+    next();
+  }
+});
+
+/* ---------- Error handler ---------- */
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled rejection:', err.message);
+});
 
 /* ---------- Start ---------- */
 app.listen(PORT, () => {
-  console.log(`\n  BENJUMANLY PROPERTIES — Server running`);
-  console.log(`  http://localhost:${PORT}`);
-  console.log(`  Database: ${isProduction ? 'PostgreSQL (Supabase)' : 'SQLite (local)'}\n`);
+  console.log(`BENJUMANLY PROPERTIES — Server running on port ${PORT} (${isProduction ? 'PostgreSQL' : 'SQLite'})`);
 });

@@ -113,8 +113,10 @@
         .then(function(res){ return res.json().then(function(data){ return { ok: res.ok, data: data }; }); })
         .then(function(result){
             if(!result.ok){ showToast(result.data.error || 'Sign in failed.', 'error'); submitBtn.disabled = false; submitBtn.textContent = originalText; return; }
-            showToast('Welcome back, ' + result.data.name + '.', 'success');
-            setTimeout(function(){ location.href = result.data.role === 'admin' ? 'admin.html' : '../index.html'; }, 600);
+            localStorage.setItem('bjml_token', result.data.token);
+            localStorage.setItem('bjml_user', JSON.stringify(result.data.user));
+            showToast('Welcome back, ' + result.data.user.name + '.', 'success');
+            setTimeout(function(){ location.href = result.data.user.role === 'admin' ? 'admin.html' : '../index.html'; }, 600);
         })
         .catch(function(){ showToast('Could not reach the server. Please try again.', 'error'); submitBtn.disabled = false; submitBtn.textContent = originalText; });
     });

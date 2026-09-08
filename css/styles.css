@@ -16,7 +16,7 @@
     --surface-2: #f0ede8;
     --border: rgba(26,39,68,0.12);
     --text: #1c1a17;
-    --muted: #5a6577;
+    --muted: #4a5568;
     --primary: #1a2744;
     --primary-2: #c9a84c;
     --primary-contrast: #ffffff;
@@ -428,14 +428,14 @@ main { min-height: calc(100vh - 200px); }
 }
 .site-footer h4 { margin-bottom: 14px; color: #fdfbf7; font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; font-family: var(--font-body); }
 .site-footer .brand { font-weight: 500; font-size: 1.25rem; margin-bottom: 12px; color: #fdfbf7; }
-.site-footer p, .site-footer a, .site-footer small { color: rgba(253,251,247,0.6); }
+.site-footer p, .site-footer a, .site-footer small { color: rgba(253,251,247,0.85); }
 .site-footer a { text-decoration: none; transition: color 180ms ease; font-size: 0.92rem; }
 .site-footer a:hover { color: var(--primary-2); }
 .site-footer .links { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
 .site-footer .contact { font-size: 0.92rem; line-height: 1.8; }
 .site-footer .contact p { margin: 8px 0 0 0; }
 .site-footer address.contact { font-style: normal; }
-.site-footer .bottom { border-top: 1px solid rgba(253,251,247,0.08); padding: 20px 32px; text-align: center; font-size: 0.78rem; color: rgba(253,251,247,0.4); letter-spacing: 0.02em; }
+.site-footer .bottom { border-top: 1px solid rgba(253,251,247,0.08); padding: 20px 32px; text-align: center; font-size: 0.78rem; color: rgba(253,251,247,0.7); letter-spacing: 0.02em; }
 
 @media (max-width: 768px) { .site-footer .footer-inner { grid-template-columns: 1fr; } }
 
