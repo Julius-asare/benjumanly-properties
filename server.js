@@ -11,6 +11,37 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'bjml-secret-change-in-production-' + (process.env.NODE_ENV || 'dev');
 const isProduction = !!process.env.DATABASE_URL;
 
+/* ---------- Env Validation ---------- */
+if (isProduction && (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)) {
+  console.error('FATAL: JWT_SECRET must be set to a secure random string (min 32 chars) in production.');
+  process.exit(1);
+}
+
+/* ---------- Account Lockout ---------- */
+const loginAttempts = new Map();
+const LOCKOUT_WINDOW = 15 * 60 * 1000;
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 30 * 60 * 1000;
+
+function checkLockout(email) {
+  const record = loginAttempts.get(email);
+  if (!record) return false;
+  if (Date.now() - record.lastAttempt > LOCKOUT_WINDOW) { loginAttempts.delete(email); return false; }
+  return record.lockedUntil && Date.now() < record.lockedUntil;
+}
+
+function recordFailedAttempt(email) {
+  let record = loginAttempts.get(email) || { attempts: 0, lastAttempt: 0, lockedUntil: 0 };
+  record.attempts++;
+  record.lastAttempt = Date.now();
+  if (record.attempts >= MAX_ATTEMPTS) {
+    record.lockedUntil = Date.now() + LOCKOUT_DURATION;
+  }
+  loginAttempts.set(email, record);
+}
+
+function clearAttempts(email) { loginAttempts.delete(email); }
+
 /* ---------- Database ---------- */
 let db;
 
@@ -236,10 +267,17 @@ app.post('/api/auth/signin', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
 
-    const result = await db.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
+    const normalizedEmail = email.toLowerCase();
+    if (checkLockout(normalizedEmail)) {
+      return res.status(429).json({ error: 'Account temporarily locked. Try again later.' });
+    }
+
+    const result = await db.query('SELECT * FROM users WHERE email = $1', [normalizedEmail]);
     if (result.rows.length === 0 || !(await bcrypt.compare(password, result.rows[0].password))) {
+      recordFailedAttempt(normalizedEmail);
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
+    clearAttempts(normalizedEmail);
     const user = result.rows[0];
     const token = generateToken(user);
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });

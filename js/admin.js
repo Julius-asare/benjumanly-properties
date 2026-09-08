@@ -19,14 +19,15 @@
         });
     }
 
-    document.querySelectorAll('.admin-tab').forEach(function(tab) {
-        tab.addEventListener('click', function() {
-            document.querySelectorAll('.admin-tab').forEach(function(t) { t.classList.remove('active'); });
-            document.querySelectorAll('.admin-panel').forEach(function(p) { p.style.display = 'none'; });
-            tab.classList.add('active');
-            document.getElementById('panel-' + tab.dataset.tab).style.display = '';
+        document.querySelectorAll('.admin-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.admin-tab').forEach(function(t) { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+                document.querySelectorAll('.admin-panel').forEach(function(p) { p.style.display = 'none'; });
+                tab.classList.add('active');
+                tab.setAttribute('aria-selected', 'true');
+                document.getElementById('panel-' + tab.dataset.tab).style.display = '';
+            });
         });
-    });
 
     function loadListings() {
         fetch('/api/listings').then(function(r){ return r.json(); }).then(function(listings) {

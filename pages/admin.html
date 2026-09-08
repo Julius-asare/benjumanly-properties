@@ -13,7 +13,7 @@
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to content</a>
-    <div class="loading-bar" id="loading-bar"></div>
+    <div class="loading-bar" id="loading-bar" role="progressbar" aria-live="polite"></div>
 
     <nav class="navbar" role="navigation" aria-label="Main navigation">
         <div class="container">
@@ -51,14 +51,14 @@
     <main id="main-content">
         <section class="role-section reveal">
             <div class="container">
-                <div class="admin-tabs">
-                    <button class="admin-tab active" data-tab="listings">Listings</button>
-                    <button class="admin-tab" data-tab="contacts">Contacts</button>
-                    <button class="admin-tab" data-tab="users">Users</button>
+                <div class="admin-tabs" role="tablist" aria-label="Admin sections">
+                    <button class="admin-tab active" role="tab" aria-selected="true" aria-controls="panel-listings" id="tab-listings" data-tab="listings">Listings</button>
+                    <button class="admin-tab" role="tab" aria-selected="false" aria-controls="panel-contacts" id="tab-contacts" data-tab="contacts">Contacts</button>
+                    <button class="admin-tab" role="tab" aria-selected="false" aria-controls="panel-users" id="tab-users" data-tab="users">Users</button>
                 </div>
 
                 <!-- Listings Panel -->
-                <div class="admin-panel" id="panel-listings">
+                <div class="admin-panel" role="tabpanel" id="panel-listings" aria-labelledby="tab-listings">
                     <div class="admin-header">
                         <h2>Manage Listings</h2>
                         <button class="btn primary small" id="add-listing-btn">+ Add Listing</button>
@@ -69,7 +69,7 @@
                 </div>
 
                 <!-- Contacts Panel -->
-                <div class="admin-panel" id="panel-contacts" style="display:none">
+                <div class="admin-panel" role="tabpanel" id="panel-contacts" aria-labelledby="tab-contacts" style="display:none">
                     <div class="admin-header">
                         <h2>Contact Messages</h2>
                     </div>
@@ -79,7 +79,7 @@
                 </div>
 
                 <!-- Users Panel -->
-                <div class="admin-panel" id="panel-users" style="display:none">
+                <div class="admin-panel" role="tabpanel" id="panel-users" aria-labelledby="tab-users" style="display:none">
                     <div class="admin-header">
                         <h2>Registered Users</h2>
                     </div>
