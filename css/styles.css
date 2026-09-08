@@ -850,6 +850,7 @@ header.reveal { transform: none; }
     white-space: nowrap;
 }
 .nav-brand:hover { color: var(--primary-2); }
+.nav-logo { width: 28px; height: 28px; vertical-align: middle; margin-right: 8px; border-radius: 6px; position: relative; top: -1px; }
 
 /* ---------------- Focus visible ---------------- */
 :focus-visible {
