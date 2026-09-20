@@ -24,7 +24,7 @@
     --nav-bg: #0f1a2e;
     --heading: #0f1724;
     --accent: #c9a84c;
-    --bg-image: url('../images/header2-bg-hd.jpg');
+    --bg-image: url('../images/header2-bg-vivid.jpg');
     --shadow-color: 15,26,46;
     --font-display: 'Fraunces', 'Georgia', serif;
     --font-body: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -96,6 +96,8 @@ header {
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
+    -webkit-background-size: cover;
+    image-rendering: -webkit-optimize-contrast;
     color: #fdfbf7;
     padding: 148px 32px 108px;
     min-height: 50vh;
