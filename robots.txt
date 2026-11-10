@@ -4,4 +4,4 @@ Disallow: /api/
 Disallow: /pages/admin.html
 Disallow: /pages/signin.html
 Disallow: /pages/signup.html
-Sitemap: https://benjumanly-properties.onrender.com/sitemap.xml
+Sitemap: https://benjumanly-properties-duh3.onrender.com/sitemap.xml
