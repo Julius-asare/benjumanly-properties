@@ -2,11 +2,13 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const path = require('path');
 
 const app = express();
+// Behind Render's proxy — trust first hop so req.ip is the real visitor IP
+// (without this, ALL visitors share one rate-limit bucket)
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'bjml-secret-change-in-production-' + (process.env.NODE_ENV || 'dev');
 const isProduction = !!process.env.DATABASE_URL;
@@ -190,20 +192,59 @@ app.use(helmet({
 
 app.use(cors({ origin: process.env.ALLOWED_ORIGIN || false, credentials: true }));
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many requests. Please try again later.' }
-});
-app.use('/api/', limiter);
+/* ---------- Token Bucket Rate Limiter ----------
+   Instead of a fixed window (which resets on the clock and allows
+   2x bursts at the window boundary), each IP gets a bucket:
+   - capacity = max burst allowed at once
+   - refillPerSecond = how fast capacity comes back
+   Only two values stored per IP: tokens left + last refill time. */
+function createTokenBucket({ capacity, refillPerSecond }) {
+  const buckets = new Map();
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: { error: 'Too many attempts. Please try again later.' }
-});
+  // Purge idle buckets so memory doesn't grow forever
+  setInterval(() => {
+    const idleCutoff = Date.now() - 10 * 60 * 1000;
+    for (const [key, b] of buckets) {
+      if (b.last < idleCutoff) buckets.delete(key);
+    }
+  }, 5 * 60 * 1000).unref();
+
+  return function tokenBucket(req, res, next) {
+    const key = req.ip || 'unknown';
+    const now = Date.now();
+    let bucket = buckets.get(key);
+    if (!bucket) {
+      bucket = { tokens: capacity, last: now };
+      buckets.set(key, bucket);
+    }
+    // Refill continuously based on elapsed time
+    const elapsedSec = (now - bucket.last) / 1000;
+    bucket.tokens = Math.min(capacity, bucket.tokens + elapsedSec * refillPerSecond);
+    bucket.last = now;
+
+    if (bucket.tokens >= 1) {
+      bucket.tokens -= 1;
+      res.set('X-RateLimit-Limit', String(capacity));
+      res.set('X-RateLimit-Remaining', String(Math.max(0, Math.floor(bucket.tokens))));
+      return next();
+    }
+
+    const retryAfter = Math.max(1, Math.ceil((1 - bucket.tokens) / refillPerSecond));
+    res.set('Retry-After', String(retryAfter));
+    res.status(429).json({
+      error: 'Too many requests. Please slow down and try again in a moment.',
+      retryAfterSeconds: retryAfter
+    });
+  };
+}
+
+// General API: burst of 30, sustained 30 requests/min per IP
+const apiLimiter = createTokenBucket({ capacity: 30, refillPerSecond: 0.5 });
+app.use('/api/', apiLimiter);
+
+// Auth endpoints: burst of 5, sustained 2/min — tight enough to stop
+// brute force, loose enough to allow quick retries after a typo
+const authLimiter = createTokenBucket({ capacity: 5, refillPerSecond: 1 / 30 });
 app.use('/api/auth/', authLimiter);
 
 app.use(express.json({ limit: '10kb' }));
