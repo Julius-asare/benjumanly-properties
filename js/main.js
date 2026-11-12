@@ -109,60 +109,77 @@
         });
     }
 
-    /* ---------- Sticky navbar shadow ---------- */
+    /* ---------- Sticky navbar + scroll-to-top ----------
+       ONE scroll listener, throttled to animation frames — the browser
+       fires scroll events up to 120x/sec; we do at most 1 update/frame. */
     var navbar = document.querySelector('.navbar');
-    if (navbar) {
-        window.addEventListener('scroll', function () {
-            navbar.classList.toggle('scrolled', window.scrollY > 20);
-        }, { passive: true });
-    }
-
-    /* ---------- Scroll-to-top ---------- */
     var scrollBtn = document.getElementById('scroll-top');
+    var scrollTicking = false;
+    function updateScrollUI() {
+        scrollTicking = false;
+        var y = window.scrollY;
+        if (navbar) navbar.classList.toggle('scrolled', y > 20);
+        if (scrollBtn) scrollBtn.classList.toggle('visible', y > 400);
+    }
+    window.addEventListener('scroll', function () {
+        if (scrollTicking) return;
+        scrollTicking = true;
+        requestAnimationFrame(updateScrollUI);
+    }, { passive: true });
     if (scrollBtn) {
-        window.addEventListener('scroll', function () {
-            scrollBtn.classList.toggle('visible', window.scrollY > 400);
-        }, { passive: true });
         scrollBtn.addEventListener('click', function () {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
 
-    /* ---------- Reveal on scroll ---------- */
-    function reveal() {
-        document.querySelectorAll('.reveal:not(.visible)').forEach(function (el) {
-            var rect = el.getBoundingClientRect();
-            if (rect.top < window.innerHeight - 60) el.classList.add('visible');
-        });
+    /* ---------- Reveal on scroll + stat counters ----------
+       IntersectionObserver instead of scroll handlers: the browser tells
+       us when an element enters the viewport — ZERO DOM queries,
+       ZERO forced layout, ZERO work on scroll events. */
+    function animateCounter(el) {
+        if (el.dataset.done) return;
+        el.dataset.done = '1';
+        var target = parseInt(el.dataset.count, 10) || 0;
+        var suffix = el.dataset.suffix || '';
+        var duration = 1200;
+        var start = performance.now();
+        el.setAttribute('aria-live', 'polite');
+        el.setAttribute('role', 'status');
+        function step(now) {
+            var progress = Math.min((now - start) / duration, 1);
+            var eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.round(target * eased) + suffix;
+            if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
     }
-    window.addEventListener('scroll', reveal, { passive: true });
-    window.addEventListener('resize', reveal, { passive: true });
-    reveal();
 
-    /* ---------- Stat counter ---------- */
-    function animateCounters() {
-        document.querySelectorAll('.stat-number').forEach(function (el) {
-            if (el.dataset.done) return;
-            var rect = el.getBoundingClientRect();
-            if (rect.top > window.innerHeight) return;
-            el.dataset.done = '1';
-            var target = parseInt(el.dataset.count, 10) || 0;
-            var suffix = el.dataset.suffix || '';
-            var duration = 1200;
-            var start = performance.now();
-            el.setAttribute('aria-live', 'polite');
-            el.setAttribute('role', 'status');
-            function step(now) {
-                var progress = Math.min((now - start) / duration, 1);
-                var eased = 1 - Math.pow(1 - progress, 3);
-                el.textContent = Math.round(target * eased) + suffix;
-                if (progress < 1) requestAnimationFrame(step);
-            }
-            requestAnimationFrame(step);
-        });
+    var revealEls = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+    var statEls = Array.prototype.slice.call(document.querySelectorAll('.stat-number'));
+
+    if ('IntersectionObserver' in window) {
+        var revealIO = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add('visible');
+                revealIO.unobserve(entry.target); // one-shot: stop observing after reveal
+            });
+        }, { rootMargin: '0px 0px -60px 0px' }); // matches old "60px before bottom" rule
+        revealEls.forEach(function (el) { revealIO.observe(el); });
+
+        var statIO = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                statIO.unobserve(entry.target);
+                animateCounter(entry.target);
+            });
+        }, { threshold: 0.3 });
+        statEls.forEach(function (el) { statIO.observe(el); });
+    } else {
+        // Fallback for very old browsers: reveal everything at once
+        revealEls.forEach(function (el) { el.classList.add('visible'); });
+        statEls.forEach(animateCounter);
     }
-    window.addEventListener('scroll', animateCounters, { passive: true });
-    animateCounters();
 
     /* ---------- Active nav link ---------- */
     var currentPage = location.pathname.split('/').pop() || 'index.html';

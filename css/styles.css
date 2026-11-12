@@ -145,7 +145,7 @@ header .tagline {
     position: sticky;
     top: 0;
     z-index: 1000;
-    transition: box-shadow 280ms ease, padding 280ms ease;
+    transition: box-shadow 280ms ease;
 }
 .navbar.scrolled { box-shadow: 0 12px 28px rgba(0,0,0,0.18); }
 
@@ -177,8 +177,6 @@ header .tagline {
     position: relative;
     transition: color 220ms ease;
 }
-.navbar.scrolled a { padding: 18px 15px; }
-
 .navbar a::after {
     content: "";
     position: absolute;
@@ -189,7 +187,6 @@ header .tagline {
     transform-origin: left;
     transition: transform 320ms var(--ease);
 }
-.navbar.scrolled a::after { bottom: 9px; }
 .navbar a:hover { color: #fdfbf7; }
 .navbar a:hover::after { transform: scaleX(1); }
 .navbar a.active { color: #fdfbf7; }
@@ -522,7 +519,7 @@ main { min-height: calc(100vh - 200px); }
 @media (max-width: 480px) { .auth-card { padding: 26px; } }
 
 /* ---------------- Reveal / motion utilities ---------------- */
-.reveal { opacity: 0; transform: translateY(14px); transition: opacity 720ms var(--ease), transform 720ms var(--ease); will-change: opacity, transform; }
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity 720ms var(--ease), transform 720ms var(--ease); }
 .reveal.visible { opacity: 1; transform: none; }
 
 header.reveal { transform: none; }
