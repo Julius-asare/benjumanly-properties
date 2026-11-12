@@ -89,10 +89,22 @@ if (isProduction) {
       );
     `);
 
-    const adminCheck = await db.query('SELECT id FROM users WHERE email = $1', ['admin@benjumanly.com']);
-    if (adminCheck.rows.length === 0) {
-      const hash = await bcrypt.hash('admin123', 10);
-      await db.query('INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)', ['Admin', 'admin@benjumanly.com', hash, 'admin']);
+    // Admin account is created/rotated ONLY from env vars — never hardcoded.
+    // (server source is publicly readable; hardcoded creds = instant takeover)
+    const adminEmail = (process.env.ADMIN_EMAIL || '').toLowerCase();
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (adminEmail && adminPassword) {
+      const hash = await bcrypt.hash(adminPassword, 10);
+      const existing = await db.query('SELECT id FROM users WHERE email = $1', [adminEmail]);
+      if (existing.rows.length) {
+        await db.query('UPDATE users SET password = $1, role = $2 WHERE email = $3', [hash, 'admin', adminEmail]);
+      } else {
+        await db.query('INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)', ['Admin', adminEmail, hash, 'admin']);
+      }
+      // Delete the legacy default account (password was exposed in source)
+      if (adminEmail !== 'admin@benjumanly.com') {
+        await db.query('DELETE FROM users WHERE email = $1', ['admin@benjumanly.com']);
+      }
     }
 
     const listingCheck = await db.query('SELECT COUNT(*) as cnt FROM listings');
@@ -138,10 +150,20 @@ if (isProduction) {
     );
   `);
 
-  const adminExists = sqlite.prepare('SELECT id FROM users WHERE email = ?').get('admin@benjumanly.com');
-  if (!adminExists) {
-    const hash = bcrypt.hashSync('admin123', 10);
-    sqlite.prepare('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)').run('Admin', 'admin@benjumanly.com', hash, 'admin');
+  // Admin created/rotated from env vars only — no hardcoded credentials
+  const adminEmail = (process.env.ADMIN_EMAIL || '').toLowerCase();
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (adminEmail && adminPassword) {
+    const hash = bcrypt.hashSync(adminPassword, 10);
+    const existing = sqlite.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
+    if (existing) {
+      sqlite.prepare('UPDATE users SET password = ?, role = ? WHERE email = ?').run(hash, 'admin', adminEmail);
+    } else {
+      sqlite.prepare('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)').run('Admin', adminEmail, hash, 'admin');
+    }
+    if (adminEmail !== 'admin@benjumanly.com') {
+      sqlite.prepare('DELETE FROM users WHERE email = ?').run('admin@benjumanly.com');
+    }
   }
   const listingCount = sqlite.prepare('SELECT COUNT(*) as cnt FROM listings').get().cnt;
   if (listingCount === 0) {
@@ -432,12 +454,28 @@ app.delete('/api/admin/contacts/:id', authenticate, requireAdmin, async (req, re
   }
 });
 
-/* ---------- Static files (restricted) ---------- */
-app.use(express.static(path.join(__dirname, 'images'), { maxAge: '1y', immutable: true }));
-app.use(express.static(path.join(__dirname, 'css'), { maxAge: '7d' }));
-app.use(express.static(path.join(__dirname, 'js'), { maxAge: '7d' }));
-app.use(express.static(path.join(__dirname, 'pages'), { maxAge: '1d' }));
-app.use(express.static(__dirname, { maxAge: '1d', index: 'index.html' }));
+/* ---------- Static files (restricted: explicit paths ONLY) ----------
+   The old config served the ENTIRE project root, which exposed server.js,
+   package.json, render.yaml and node_modules to the public. */
+app.use('/images', express.static(path.join(__dirname, 'images'), { maxAge: '1y', immutable: true }));
+app.use('/css', express.static(path.join(__dirname, 'css'), { maxAge: '7d' }));
+app.use('/js', express.static(path.join(__dirname, 'js'), { maxAge: '7d' }));
+app.use('/pages', express.static(path.join(__dirname, 'pages'), { maxAge: '1d' }));
+app.get('/sitemap.xml', (req, res) => res.sendFile(path.join(__dirname, 'sitemap.xml')));
+app.get('/robots.txt', (req, res) => res.sendFile(path.join(__dirname, 'robots.txt')));
+app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'images', 'favicon.svg')));
+const sendIndex = (req, res) => res.sendFile(path.join(__dirname, 'index.html'));
+app.get('/', sendIndex);
+app.get('/index.html', sendIndex);
+
+/* Block any sensitive file that slips through (server.js, package.json,
+   render.yaml, logs, databases, node_modules, …) */
+app.use((req, res, next) => {
+  if (/\.(js|json|yaml|yml|log|db|md|lock|sqlite|sh)$/i.test(req.path) || req.path.includes('node_modules')) {
+    return res.status(404).end();
+  }
+  next();
+});
 
 /* ---------- SPA fallback ---------- */
 app.use((req, res, next) => {
